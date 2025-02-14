@@ -1,5 +1,4 @@
-//go:build go1.17 && !go1.25
-// +build go1.17,!go1.25
+// +build !go1.21
 
 /*
  * Copyright 2021 ByteDance Inc.
@@ -17,22 +16,33 @@
  * limitations under the License.
  */
 
-package api
+package resolver
 
 import (
-	"github.com/bytedance/sonic/internal/envs"
-	"github.com/bytedance/sonic/internal/decoder/jitdec"
-	"github.com/bytedance/sonic/internal/decoder/optdec"
+    _ `encoding/json`
+    `reflect`
+    _ `unsafe`
 )
 
-var (
-	pretouchImpl = jitdec.Pretouch
-	decodeImpl = jitdec.Decode
-) 
+type StdField struct {
+    name        string
+    nameBytes   []byte
+    equalFold   func()
+    nameNonEsc  string
+    nameEscHTML string
+    tag         bool
+    index       []int
+    typ         reflect.Type
+    omitEmpty   bool
+    quoted      bool
+    encoder     func()
+}
 
- func init() {
-	if envs.UseOptDec {
-		pretouchImpl = optdec.Pretouch
-		decodeImpl = optdec.Decode
-	}
- }
+type StdStructFields struct {
+    list      []StdField
+    nameIndex map[string]int
+}
+
+//go:noescape
+//go:linkname typeFields encoding/json.typeFields
+func typeFields(_ reflect.Type) StdStructFields
